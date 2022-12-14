@@ -40,6 +40,6 @@
   },
   "homepage": "https://github.com/ChocolateLibUI/settings#readme",
   "dependencies": {
-    "@chocolatelib/value": "^0.0.6"
+    "@chocolatelib/value": "^0.0.7"
   }
 }
