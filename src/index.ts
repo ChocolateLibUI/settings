@@ -1,4 +1,4 @@
-import { ValueLimited, Limiter, Value, ValueLimitedNumber, ValueLimitedString, EnumList } from "@chocolatelib/value";
+import { ValueLimited, Limiter, Value, ValueLimitedNumber, ValueLimitedString, EnumList, ValueArray } from "@chocolatelib/value";
 
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
@@ -9,16 +9,20 @@ export let initSettings = (packageName: string) => {
     return bottomGroups[packageName];
 }
 
-/**Group of settings*/
+export class MultiSetting {
+
+}
+
+/**Group of settings should never be instantiated manually use initSettings*/
 export class SettingsGroup {
     private path: string;
-    private settings: { [key: string]: ValueLimited<boolean | number | string> } = {};
+    private settings: { [key: string]: Value<boolean> | ValueLimitedNumber | ValueLimitedString } = {};
     private subGroups: { [key: string]: SettingsGroup } = {};
-
     constructor(path: string) {
         this.path = path;
     }
 
+    /**Makes a settings subgroup for this group */
     makeSubGroup(name: string) {
         if (name in this.subGroups) {
             console.warn('Sub group already registered ' + name);
@@ -36,7 +40,7 @@ export class SettingsGroup {
         let saved = localStorage[this.path + '/' + name];
         let setting = new Value<boolean>(saved ? JSON.parse(saved) : defaultValue);
         setting.addListener((val) => { localStorage[this.path + '/' + name] = JSON.stringify(val); }, !saved)
-        return setting;
+        return this.settings[name] = setting;
     }
 
     /**Makes a number setting */
@@ -47,7 +51,7 @@ export class SettingsGroup {
         let saved = localStorage[this.path + '/' + name];
         let setting = new ValueLimitedNumber(saved ? JSON.parse(saved) : defaultValue, min, max, step, limiters);
         setting.addListener((val) => { localStorage[this.path + '/' + name] = JSON.stringify(val); }, !saved)
-        return setting;
+        return this.settings[name] = setting;
     }
 
     /**Makes a string setting */
@@ -58,6 +62,6 @@ export class SettingsGroup {
         let saved = localStorage[this.path + '/' + name];
         let setting = new ValueLimitedString(saved ? JSON.parse(saved) : defaultValue, enums, maxLength, maxByteLength, limiters);
         setting.addListener((val) => { localStorage[this.path + '/' + name] = JSON.stringify(val); }, !saved)
-        return setting;
+        return this.settings[name] = setting;
     }
 }
