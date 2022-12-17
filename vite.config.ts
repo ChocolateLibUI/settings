@@ -1,5 +1,4 @@
 import { resolve, } from 'path'
-import { renameSync } from 'fs'
 import { defineConfig } from 'vite'
 import { name, dependencies } from "./package.json"
 import dts from "vite-plugin-dts"
@@ -17,6 +16,7 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
                     },
                     build: {
                         outDir: "../docs",
+                        emptyOutDir: true,
                     },
                     preview: {
                         port: 666
@@ -43,9 +43,10 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
                 return {
                     root: "./pages",
                     build: {
-                        outDir: "../docs"
+                        outDir: "../docs",
+                        emptyOutDir: true,
                     },
-                    base: ''
+                    base: '',
                 }
             } else if (mode === 'tests' || mode === 'production') {
                 return {
@@ -70,9 +71,6 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
                     },
                     plugins: [dts({
                         rollupTypes: true,
-                        afterBuild() {
-                            renameSync(resolve(__dirname, 'dist/types.d.ts'), resolve(__dirname, 'dist/index.d.ts'))
-                        },
                     })]
                 }
             }
