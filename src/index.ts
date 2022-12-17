@@ -1,4 +1,4 @@
-import { ValueLimited, Limiter, Value, ValueLimitedNumber, ValueLimitedString, EnumList, ValueArray } from "@chocolatelib/value";
+import { Limiter, Value, ValueLimitedNumber, ValueLimitedString, EnumList } from "@chocolatelib/value";
 
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
@@ -7,10 +7,6 @@ let bottomGroups: { [key: string]: SettingsGroup } = {};
 export let initSettings = (packageName: string) => {
     bottomGroups[packageName] = new SettingsGroup(packageName);;
     return bottomGroups[packageName];
-}
-
-export class MultiSetting {
-
 }
 
 /**Group of settings should never be instantiated manually use initSettings*/
