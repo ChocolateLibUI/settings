@@ -42,12 +42,21 @@ export class SettingsGroup {
      * @param id unique identifier for this setting in the group
      * @param name name of setting formatted for user reading
      * @param description a description of what the setting group is about formatted for user reading*/
-    makeBooleanSetting(id: string, name: string, description: string, defaultValue: boolean) {
+    makeBooleanSetting(id: string, name: string, description: string, defaultValue: boolean | Promise<boolean>) {
         if (id in this.settings) {
             throw new Error('Settings already registered ' + id);
         }
         let saved = localStorage[this.pathID + '/' + id];
-        let setting = new Value<boolean>(saved ? JSON.parse(saved) : defaultValue);
+        if (saved) {
+            var setting = new Value<boolean>(JSON.parse(saved));
+        } else {
+            if (typeof defaultValue === 'boolean') {
+                var setting = new Value<boolean>(defaultValue);
+            } else {
+                var setting = new Value<boolean>(false);
+                defaultValue.then((val) => { setting.set = val });
+            }
+        }
         setting.info = { name, description };
         setting.addListener((val) => { localStorage[this.pathID + '/' + id] = JSON.stringify(val); }, !saved)
         return this.settings[id] = setting;
@@ -57,12 +66,21 @@ export class SettingsGroup {
      * @param id unique identifier for this setting in the group
      * @param name name of setting formatted for user reading
      * @param description a description of what the setting group is about formatted for user reading*/
-    makeNumberSetting(id: string, name: string, description: string, defaultValue: number, min?: number, max?: number, step?: number, limiters?: Limiter<number>[]) {
+    makeNumberSetting(id: string, name: string, description: string, defaultValue: number | Promise<number>, min?: number, max?: number, step?: number, limiters?: Limiter<number>[]) {
         if (id in this.settings) {
             throw new Error('Settings already registered ' + id);
         }
         let saved = localStorage[this.pathID + '/' + id];
-        let setting = new ValueLimitedNumber(saved ? JSON.parse(saved) : defaultValue, min, max, step, limiters);
+        if (saved) {
+            var setting = new ValueLimitedNumber(JSON.parse(saved), min, max, step, limiters);
+        } else {
+            if (typeof defaultValue === 'number') {
+                var setting = new ValueLimitedNumber(defaultValue, min, max, step, limiters);
+            } else {
+                var setting = new ValueLimitedNumber(NaN, min, max, step, limiters);
+                defaultValue.then((val) => { setting.set = val });
+            }
+        }
         setting.info = { name, description };
         setting.addListener((val) => { localStorage[this.pathID + '/' + id] = JSON.stringify(val); }, !saved)
         return this.settings[id] = setting;
@@ -72,12 +90,21 @@ export class SettingsGroup {
      * @param id unique identifier for this setting in the group
      * @param name name of setting formatted for user reading
      * @param description a description of what the setting group is about formatted for user reading*/
-    makeStringSetting(id: string, name: string, description: string, defaultValue: string, enums?: EnumList, maxLength?: number, maxByteLength?: number, limiters?: Limiter<string>[]) {
+    makeStringSetting(id: string, name: string, description: string, defaultValue: string | Promise<string>, enums?: EnumList, maxLength?: number, maxByteLength?: number, limiters?: Limiter<string>[]) {
         if (id in this.settings) {
             throw new Error('Settings already registered ' + id);
         }
         let saved = localStorage[this.pathID + '/' + id];
-        let setting = new ValueLimitedString(saved ? JSON.parse(saved) : defaultValue, enums, maxLength, maxByteLength, limiters);
+        if (saved) {
+            var setting = new ValueLimitedString(JSON.parse(saved), enums, maxLength, maxByteLength, limiters);
+        } else {
+            if (typeof defaultValue === 'string') {
+                var setting = new ValueLimitedString(defaultValue, enums, maxLength, maxByteLength, limiters);
+            } else {
+                var setting = new ValueLimitedString('', enums, maxLength, maxByteLength, limiters);
+                defaultValue.then((val) => { setting.set = val });
+            }
+        }
         setting.info = { name, description };
         setting.addListener((val) => { localStorage[this.pathID + '/' + id] = JSON.stringify(val); }, !saved)
         return this.settings[id] = setting;
