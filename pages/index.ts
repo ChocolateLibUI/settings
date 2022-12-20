@@ -1,9 +1,9 @@
 import "./index.css";
 import { initSettings } from "../src"
+import { name } from "../package.json"
 
+let settings = initSettings(name, 'Test Settings', 'Description of test settings');
 (async () => {
-    let settings = initSettings((await import("../package.json")).name, 'Test Settings', 'Description of test settings');
-
     let TestBoolSetting = settings.makeBooleanSetting('TestBool', '', '', false)
     let valueBool = document.createElement('input');
     valueBool.type = 'checkbox';
@@ -34,4 +34,3 @@ import { initSettings } from "../src"
         valueString.value = await TestStringSetting.get;
     });
 })()
-

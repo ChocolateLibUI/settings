@@ -3,7 +3,7 @@ import { Limiter, Value, ValueLimitedNumber, ValueLimitedString, EnumList } from
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
 /**Initialises the settings for the package
- * @param packageName use (await import("../package.json")).name
+ * @param packageName use import {name} from ("../package.json")
  * @param name name of group formatted for user reading
  * @param description a description of what the setting group is about*/
 export let initSettings = (packageName: string, name: string, description: string) => {
