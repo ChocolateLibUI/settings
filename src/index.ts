@@ -1,4 +1,4 @@
-import { StateWrite, StateSetter } from "@chocolatelib/state";
+import { State } from "@chocolatelib/state";
 
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
@@ -14,7 +14,7 @@ export let initSettings = (packageName: string, name: string, description: strin
 /**Group of settings should never be instantiated manually use initSettings*/
 export class SettingsGroup {
     private pathID: string;
-    private settings: { [key: string]: StateWrite<any> } = {};
+    private settings: { [key: string]: State<any> } = {};
     private subGroups: { [key: string]: SettingsGroup } = {};
     readonly name: string;
     readonly description: string;
@@ -33,19 +33,19 @@ export class SettingsGroup {
         if (id in this.subGroups) {
             console.warn('Sub group already registered ' + id);
             return undefined
-        } else {
-            return this.subGroups[id] = new SettingsGroup(this.pathID + '/' + id, name, description);
         }
+        return this.subGroups[id] = new SettingsGroup(this.pathID + '/' + id, name, description);
     }
 
     /**Adds a state to the settings */
-    async addState<T>(id: string, state: StateWrite<T>, setter: StateSetter<T>, initial: T | PromiseLike<T> | undefined = undefined) {
-        if (id in this.settings) { throw new Error('Settings already registered ' + id); }
+    async addState<T>(id: string, state: State<T>, initial: T | PromiseLike<T> | undefined = undefined) {
+        if (id in this.settings)
+            throw new Error('Settings already registered ' + id);
         let saved = localStorage[this.pathID + '/' + id];
         if (saved) {
-            setter(<T>JSON.parse(saved))
+            state.set(<T>JSON.parse(saved))
         } else if (initial !== undefined) {
-            setter(await initial)
+            state.set(await initial)
         }
         state.subscribe((value) => { localStorage[this.pathID + '/' + id] = JSON.stringify(value); }, !saved);
         this.settings[id] = state;
