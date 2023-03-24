@@ -1,4 +1,4 @@
-import { State } from "@chocolatelib/state";
+import { State, StateChecker, StateLimiter, StateSetter } from "@chocolatelib/state";
 
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
@@ -38,16 +38,21 @@ export class SettingsGroup {
     }
 
     /**Adds a state to the settings */
-    async addState<T>(id: string, state: State<T>, initial: T | PromiseLike<T> | undefined = undefined) {
+    addState<R, W extends R = R>(id: string, initial: R | PromiseLike<R> | undefined = undefined, setter: StateSetter<R, W> | boolean, checker?: StateChecker<W>, limiter?: StateLimiter<W>) {
         if (id in this.settings)
             throw new Error('Settings already registered ' + id);
         let saved = localStorage[this.pathID + '/' + id];
+        let state = this.settings[id] = new State<R, W>(<any>undefined, setter, checker, limiter);
         if (saved) {
-            state.set(<T>JSON.parse(saved))
-        } else if (initial !== undefined) {
-            state.set(await initial)
+            state.write(<W>JSON.parse(saved));
+        } else {
+            if ((initial as PromiseLike<W>).then) {
+                (initial as PromiseLike<W>).then(state.write.bind(state));
+            } else {
+                state.write(<W>initial)
+            }
         }
         state.subscribe((value) => { localStorage[this.pathID + '/' + id] = JSON.stringify(value); }, !saved);
-        this.settings[id] = state;
+        return state;
     }
 }

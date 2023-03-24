@@ -4,33 +4,35 @@ import { name } from "../package.json"
 
 let settings = initSettings(name, 'Test Settings', 'Description of test settings');
 (async () => {
-    let TestBoolSetting = settings.makeBooleanSetting('TestBool', '', '', false)
+    let TestBoolSetting = settings.addState('TestBool', false, true)
     let valueBool = document.createElement('input');
     valueBool.type = 'checkbox';
     document.body.appendChild(valueBool);
-    valueBool.checked = await TestBoolSetting.get;
+    valueBool.checked = await TestBoolSetting;
     valueBool.addEventListener('change', (e) => {
-        TestBoolSetting.set = valueBool.checked;
+        TestBoolSetting.write(valueBool.checked);
     });
 
-    let TestNumberSetting = settings.makeNumberSetting('TestNumber', '', '', 10, 2, 99)
+    let TestNumberSetting = settings.addState('TestNumber', 99, true)
     let valueNumber = document.createElement('input');
     valueNumber.type = 'number';
-    valueNumber.min = String(TestNumberSetting.min);
-    valueNumber.max = String(TestNumberSetting.max);
     document.body.appendChild(valueNumber);
-    valueNumber.value = String(await TestNumberSetting.get);
+    valueNumber.value = String(await TestNumberSetting);
     valueNumber.addEventListener('change', async (e) => {
-        TestNumberSetting.set = Number(valueNumber.value);
-        valueNumber.value = String(await TestNumberSetting.get);
+        TestNumberSetting.write(Number(valueNumber.value));
+        valueNumber.value = String(await TestNumberSetting);
     });
 
-    let TestStringSetting = settings.makeStringSetting('TestString', '', '', 'asdf', undefined, 10)
+    let TestStringSetting = settings.addState('TestString', new Promise<string>((a) => {
+        setTimeout(() => {
+            a('yo');
+        }, 5000)
+    }), true)
     let valueString = document.createElement('input');
     document.body.appendChild(valueString);
-    valueString.value = await TestStringSetting.get;
+    valueString.value = await TestStringSetting;
     valueString.addEventListener('change', async (e) => {
-        TestStringSetting.set = valueString.value;
-        valueString.value = await TestStringSetting.get;
+        TestStringSetting.write(valueString.value);
+        valueString.value = await TestStringSetting;
     });
 })()
