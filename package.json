@@ -40,6 +40,6 @@
   },
   "homepage": "https://github.com/ChocolateLibUI/settings#readme",
   "dependencies": {
-    "@chocolatelib/state": ">=0.0.7 || ^1.0.0"
+    "@chocolatelib/state": ">=0.0.9 || ^1.0.0"
   }
 }

@@ -1,4 +1,4 @@
-import { State, StateChecker, StateLimiter, StateSetter } from "@chocolatelib/state";
+import { State, StateChecker, StateLimiter, StateNumber, StateNumberLimits, StateSetter, StateString, StateStringLimits, StateWrite } from "@chocolatelib/state";
 
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
@@ -14,7 +14,7 @@ export let initSettings = (packageName: string, name: string, description: strin
 /**Group of settings should never be instantiated manually use initSettings*/
 export class SettingsGroup {
     private pathID: string;
-    private settings: { [key: string]: State<any> } = {};
+    private settings: { [key: string]: StateWrite<any> } = {};
     private subGroups: { [key: string]: SettingsGroup } = {};
     readonly name: string;
     readonly description: string;
@@ -50,6 +50,44 @@ export class SettingsGroup {
                 (initial as PromiseLike<W>).then(state.write.bind(state));
             } else {
                 state.write(<W>initial)
+            }
+        }
+        state.subscribe((value) => { localStorage[this.pathID + '/' + id] = JSON.stringify(value); }, !saved);
+        return state;
+    }
+
+    /**Adds a number to the settings */
+    addNumber(id: string, initial: number | PromiseLike<number> | undefined = undefined, limits: StateNumberLimits) {
+        if (id in this.settings)
+            throw new Error('Settings already registered ' + id);
+        let saved = localStorage[this.pathID + '/' + id];
+        let state = this.settings[id] = new StateNumber(<any>undefined, limits);
+        if (saved) {
+            state.write(JSON.parse(saved) as number);
+        } else {
+            if ((initial as PromiseLike<number>).then) {
+                (initial as PromiseLike<number>).then(state.write.bind(state));
+            } else {
+                state.write(initial as number)
+            }
+        }
+        state.subscribe((value) => { localStorage[this.pathID + '/' + id] = JSON.stringify(value); }, !saved);
+        return state;
+    }
+
+    /**Adds a string to the settings */
+    addString(id: string, initial: string | PromiseLike<string> | undefined = undefined, limits: StateStringLimits) {
+        if (id in this.settings)
+            throw new Error('Settings already registered ' + id);
+        let saved = localStorage[this.pathID + '/' + id];
+        let state = this.settings[id] = new StateString(<any>undefined, limits);
+        if (saved) {
+            state.write(JSON.parse(saved) as string);
+        } else {
+            if ((initial as PromiseLike<string>).then) {
+                (initial as PromiseLike<string>).then(state.write.bind(state));
+            } else {
+                state.write(initial as string)
             }
         }
         state.subscribe((value) => { localStorage[this.pathID + '/' + id] = JSON.stringify(value); }, !saved);
