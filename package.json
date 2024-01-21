@@ -16,18 +16,18 @@
     "build:tests": "tsc && vite build -m tests",
     "serve:dev": "vite preview --mode pages",
     "serve:tests": "vite preview --mode testServe",
-    "test": "yarn run build:tests && start-server-and-test serve:tests http://localhost:999 'cypress run'",
+    "test": "npm run build:tests && start-server-and-test serve:tests http://localhost:999 'cypress run'",
     "watch": "start-server-and-test dev:tests http://localhost:999 'cypress open --e2e --browser edge'",
-    "prepublishOnly": "yarn run test && yarn run build:lib && yarn run build:pages"
+    "prepublishOnly": "npm run test && npm run build:lib && npm run build:pages"
   },
   "devDependencies": {
-    "cypress": "^11.2.0",
-    "cypress-vite": "^1.2.1",
-    "start-server-and-test": "^1.14.0",
-    "tslib": "^2.4.1",
-    "typescript": "^4.9.3",
-    "vite": "^3.2.3",
-    "vite-plugin-dts": "^1.7.1"
+    "cypress": "^13.6.3",
+    "cypress-vite": "^1.5.0",
+    "start-server-and-test": "^2.0.3",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-dts": "^3.7.1"
   },
   "author": "chocolateandmilkwin",
   "license": "Apache-2.0",
@@ -40,6 +40,7 @@
   },
   "homepage": "https://github.com/ChocolateLibUI/settings#readme",
   "dependencies": {
-    "@chocolatelib/state": ">=0.0.9 || ^1.0.0"
+    "@chocolatelib/state": ">=0.1.2 || ^1.0.0",
+    "@chocolatelib/result": ">=0.0.4 || ^1.0.0"
   }
 }
