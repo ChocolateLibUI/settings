@@ -18,8 +18,11 @@ export let initSettings = (
   name: string,
   description: string
 ) => {
-  bottomGroups[packageName] = new SettingsGroup(packageName, name, description);
-  return bottomGroups[packageName];
+  return (bottomGroups[packageName] = new SettingsGroup(
+    packageName,
+    name,
+    description
+  ));
 };
 
 /**Group of settings should never be instantiated manually use initSettings*/

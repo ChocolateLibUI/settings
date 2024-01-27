@@ -9,17 +9,11 @@ let settings = initSettings(
   "Test Settings",
   "Description of test settings"
 );
+
 (async () => {
   let state = new State<number>(new Promise((a) => setTimeout(a, 500, 1)));
   state.write(2);
   console.log(await state);
-
-  let test1 = settings.addSetting("test1", "value", true);
-  test1.then((a) => {});
-  await new Promise((a) => {
-    setTimeout(a, 500);
-  });
-  //test1.write("value2");
 
   let TestBoolSetting = settings.addSetting("TestBool", false, true);
   let valueBool = document.createElement("input");
