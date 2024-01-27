@@ -3,6 +3,7 @@ import {
   State,
   StateLimiter,
   StateRelater,
+  StateResult,
   StateSetter,
   StateWrite,
 } from "@chocolatelib/state";
@@ -47,6 +48,26 @@ export let initSettings = (
   ));
 };
 
+class SettingsState<R, W = R, L extends {} = any> extends State<R, W, L> {
+  readonly name: string;
+  readonly description: string;
+  constructor(
+    init:
+      | StateResult<R>
+      | Promise<StateResult<R>>
+      | (() => Promise<StateResult<R>>),
+    name: string,
+    description: string,
+    setter?: StateSetter<R, W> | true,
+    limiter?: StateLimiter<W>,
+    related?: StateRelater<L>
+  ) {
+    super(init, setter, limiter, related);
+    this.name = name;
+    this.description = description;
+  }
+}
+
 /**Group of settings should never be instantiated manually use initSettings*/
 export class SettingsGroup {
   private pathID: string;
@@ -87,6 +108,8 @@ export class SettingsGroup {
 
   /**Adds a state to the settings
    * @param id unique identifier for this setting in the parent group
+   * @param name name of setting formatted for user reading
+   * @param description a description of what the setting is about formatted for user reading
    * @param init initial value for the setting, use a promise for an eager async value, use a function returning a promise for a lazy async value
    * @param setter a function that will be called when the setting is written to, if true written value will be directly saved
    * @param limiter limiter struct for value
@@ -96,6 +119,8 @@ export class SettingsGroup {
   addSetting<R, W = R, L extends {} = any>(
     id: string,
     init: R | Promise<R> | (() => Promise<R>),
+    name: string,
+    description: string,
     setter?: StateSetter<R, W> | true,
     limiter?: StateLimiter<W>,
     related?: StateRelater<L>,
@@ -104,7 +129,7 @@ export class SettingsGroup {
     if (id in this.settings)
       throw new Error("Settings already registered " + id);
     let saved = localStorage[this.pathID + "/" + id];
-    let state = (this.settings[id] = new State<R, W, L>(
+    let state = (this.settings[id] = new SettingsState<R, W, L>(
       async () => {
         if (saved) {
           try {
@@ -132,6 +157,8 @@ export class SettingsGroup {
         localStorage[this.pathID + "/" + id] = JSON.stringify(initValue);
         return Ok(initValue);
       },
+      name,
+      description,
       setter,
       limiter,
       related

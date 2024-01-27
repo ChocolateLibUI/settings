@@ -30,7 +30,7 @@ Settings initial value is only used if no value is found in local storage, the r
 Setting can also be given an optional function which is called when settings where saved with and older version of the package, to modify the setting if needed.
 
 ```typescript
-let setting = settings.addSetting("settingID", "initial value",undefined,undefined,undefined,(oldValue,oldVersion)=>{
+let setting = settings.addSetting("settingID", "initial value","Name of setting","Description of setting",undefined,undefined,undefined,(oldValue,oldVersion)=>{
     switch (oldVersion) {
         "0.0.1-beta": return modifiedValue;
         default: return oldValue;
@@ -40,6 +40,8 @@ let setting = settings.addSetting("settingID", "initial value",undefined,undefin
 
 # Changelog
 
+- ## 0.1.10
+  Added name and description to setting
 - ## 0.1.9
   Added feature to keep track of version change for modifing exisiting settings
 - ## 0.1.8

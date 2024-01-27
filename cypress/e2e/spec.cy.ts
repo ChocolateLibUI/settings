@@ -11,7 +11,7 @@ describe("empty spec", () => {
       "Test Settings",
       "Settings for testing"
     );
-    let test1 = sets.addSetting("test1", "value", true);
+    let test1 = sets.addSetting("test1", "value", "Test", "Test", true);
     test1.then((a) => {});
     expect(JSON.parse(localStorage[name + "/test1"])).to.equal("value");
     test1.write("value2");
@@ -41,6 +41,8 @@ describe("empty spec", () => {
         });
         return "value";
       })(),
+      "Test",
+      "Test",
       true
     );
     test1.then((a) => {});
