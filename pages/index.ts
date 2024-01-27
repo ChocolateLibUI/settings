@@ -1,11 +1,12 @@
 import "./index.css";
 import { initSettings } from "../src";
-import { name } from "../package.json";
+import { name, version } from "../package.json";
 import { State } from "@chocolatelib/state";
 import { Ok } from "@chocolatelib/result";
 
 let settings = initSettings(
   name,
+  version,
   "Test Settings",
   "Description of test settings"
 );
@@ -24,7 +25,23 @@ let settings = initSettings(
     TestBoolSetting.write(valueBool.checked);
   });
 
-  let TestNumberSetting = settings.addSetting("TestNumber", 99, true);
+  let TestNumberSetting = settings.addSetting(
+    "TestNumber",
+    99,
+    true,
+    undefined,
+    undefined,
+    (oldValue, oldVersion) => {
+      switch (oldVersion) {
+        case "0.1.1":
+          return 100;
+        case "0.1.5":
+          return 50;
+        default:
+          return 10;
+      }
+    }
+  );
   let valueNumber = document.createElement("input");
   valueNumber.type = "number";
   document.body.appendChild(valueNumber);

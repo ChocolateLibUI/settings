@@ -4,9 +4,10 @@ Manager for settings/configs
 Settings for a package is initialized like so
 
 ```typescript
-import { name } from "../package.json";
+import { name, version } from "../package.json";
 let settings = initSettings(
   name,
+  version,
   "Test Settings",
   "Description of test settings"
 );
@@ -26,13 +27,21 @@ let subSettings = settings.makeSubGroup(
 
 **Add setting**
 Settings initial value is only used if no value is found in local storage, the rest of the parameters are passed directly to the returned state, so look at state for documentation.
+Setting can also be given an optional function which is called when settings where saved with and older version of the package, to modify the setting if needed.
 
 ```typescript
-let setting = settings.addSetting("settingID", "initial value");
+let setting = settings.addSetting("settingID", "initial value",undefined,undefined,undefined,(oldValue,oldVersion)=>{
+    switch (oldVersion) {
+        "0.0.1-beta": return modifiedValue;
+        default: return oldValue;
+    }
+});
 ```
 
 # Changelog
 
+- ## 0.1.9
+  Added feature to keep track of version change for modifing exisiting settings
 - ## 0.1.8
   Added more documentation
 - ## 0.1.7

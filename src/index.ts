@@ -7,21 +7,43 @@ import {
   StateWrite,
 } from "@chocolatelib/state";
 
+let packages = localStorage["settings/packageVersions"] as string | undefined;
+let packageVersions: { [key: string]: string } = {};
+try {
+  packageVersions = packages
+    ? (JSON.parse(packages) as { [key: string]: string })
+    : {};
+} catch (e) {}
+let storePackageVersionsTimeout: number | undefined;
 let bottomGroups: { [key: string]: SettingsGroup } = {};
 
 /**Initialises the settings for the package
  * @param packageName use import {name} from ("../package.json")
+ * @param packageVersion use import {version} from ("../package.json")
+ * @param versionChanged function to call when the version of the package changed
  * @param name name of group formatted for user reading
  * @param description a description of what the setting group is about*/
 export let initSettings = (
   packageName: string,
+  packageVersion: string,
   name: string,
   description: string
 ) => {
+  let changed: string | undefined;
+  if (packageVersions[packageName] !== packageVersion) {
+    changed = packageVersions[packageName];
+    packageVersions[packageName] = packageVersion;
+    if (storePackageVersionsTimeout) clearTimeout(storePackageVersionsTimeout);
+    storePackageVersionsTimeout = setTimeout(() => {
+      localStorage["settings/packageVersions"] =
+        JSON.stringify(packageVersions);
+    }, 1000);
+  }
   return (bottomGroups[packageName] = new SettingsGroup(
     packageName,
     name,
-    description
+    description,
+    changed ? changed : undefined
   ));
 };
 
@@ -30,10 +52,17 @@ export class SettingsGroup {
   private pathID: string;
   private settings: { [key: string]: StateWrite<any> } = {};
   private subGroups: { [key: string]: SettingsGroup } = {};
+  readonly versionChanged: string | undefined;
   readonly name: string;
   readonly description: string;
 
-  constructor(path: string, name: string, description: string) {
+  constructor(
+    path: string,
+    name: string,
+    description: string,
+    versionChanged?: string
+  ) {
+    this.versionChanged = versionChanged;
     this.pathID = path;
     this.name = name;
     this.description = description;
@@ -51,7 +80,8 @@ export class SettingsGroup {
     return (this.subGroups[id] = new SettingsGroup(
       this.pathID + "/" + id,
       name,
-      description
+      description,
+      this.versionChanged
     ));
   }
 
@@ -61,13 +91,15 @@ export class SettingsGroup {
    * @param setter a function that will be called when the setting is written to, if true written value will be directly saved
    * @param limiter limiter struct for value
    * @param related returns related struct for the setting
+   * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
   addSetting<R, W = R, L extends {} = any>(
     id: string,
     init: R | Promise<R> | (() => Promise<R>),
     setter?: StateSetter<R, W> | true,
     limiter?: StateLimiter<W>,
-    related?: StateRelater<L>
+    related?: StateRelater<L>,
+    versionChanged?: (existing: R, oldVersion: string) => R
   ) {
     if (id in this.settings)
       throw new Error("Settings already registered " + id);
@@ -76,6 +108,15 @@ export class SettingsGroup {
       async () => {
         if (saved) {
           try {
+            if (this.versionChanged && versionChanged) {
+              let changedValue = versionChanged(
+                JSON.parse(saved),
+                this.versionChanged
+              );
+              localStorage[this.pathID + "/" + id] =
+                JSON.stringify(changedValue);
+              return Ok<R>(changedValue);
+            }
             return Ok<R>(JSON.parse(saved));
           } catch (e) {}
         }
