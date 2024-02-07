@@ -1,6 +1,6 @@
 {
   "name": "@chocolatelibui/settings",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/types.d.ts",
@@ -9,16 +9,16 @@
     "dist"
   ],
   "scripts": {
-    "dev:pages": "vite -m pages",
+    "dev": "vite -m pages",
+    "build": "tsc && vite build -m lib",
     "dev:tests": "vite -m test",
-    "build:lib": "tsc && vite build -m lib",
     "build:pages": "tsc && vite build -m pages",
     "build:tests": "tsc && vite build -m tests",
     "serve:dev": "vite preview --mode pages",
     "serve:tests": "vite preview --mode testServe",
     "test": "npm run build:tests && start-server-and-test serve:tests http://localhost:999 'cypress run'",
     "watch": "start-server-and-test dev:tests http://localhost:999 'cypress open --e2e --browser edge'",
-    "prepublishOnly": "npm run test && npm run build:lib && npm run build:pages"
+    "prepublishOnly": "npm run test && npm run build && npm run build:pages"
   },
   "devDependencies": {
     "cypress": "^13.6.3",
@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/ChocolateLibUI/settings#readme",
   "dependencies": {
-    "@chocolatelib/state": ">=0.1.2 || ^1.0.0",
-    "@chocolatelib/result": ">=0.0.4 || ^1.0.0"
+    "@chocolatelib/state": ">=0.1.9 || ^1.0.0",
+    "@chocolatelib/result": ">=0.0.5 || ^1.0.0"
   }
 }

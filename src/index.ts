@@ -1,12 +1,17 @@
-import { Ok } from "@chocolatelib/result";
+import { Ok, Option } from "@chocolatelib/result";
 import {
   State,
+  StateAsync,
   StateLimiter,
-  StateRelater,
+  StateRelated,
   StateResult,
-  StateSetter,
   StateWrite,
 } from "@chocolatelib/state";
+
+let nameTransformer: ((name: string) => string) | undefined;
+export let settingsSetNameTransform = (transform: (name: string) => string) => {
+  nameTransformer = transform;
+};
 
 let packages = localStorage["settings/packageVersions"] as string | undefined;
 let packageVersions: { [key: string]: string } = {};
@@ -24,12 +29,15 @@ let bottomGroups: { [key: string]: SettingsGroup } = {};
  * @param versionChanged function to call when the version of the package changed
  * @param name name of group formatted for user reading
  * @param description a description of what the setting group is about*/
-export let initSettings = (
+export let settingsInit = (
   packageName: string,
   packageVersion: string,
   name: string,
   description: string
 ) => {
+  if (nameTransformer) {
+    packageName = nameTransformer(packageName);
+  }
   let changed: string | undefined;
   if (packageVersions[packageName] !== packageVersion) {
     changed = packageVersions[packageName];
@@ -48,7 +56,31 @@ export let initSettings = (
   ));
 };
 
-class SettingsState<R, W = R, L extends {} = any> extends State<R, W, L> {
+class SettingsState<R, W = R, L extends StateRelated = any> extends State<
+  R,
+  W,
+  L
+> {
+  readonly name: string;
+  readonly description: string;
+  constructor(
+    init: StateResult<R> | (() => StateResult<R>),
+    name: string,
+    description: string,
+    setter?: ((value: W) => Option<StateResult<R>>) | true,
+    limiter?: StateLimiter<W>,
+    related?: () => Option<L>
+  ) {
+    super(init, setter, limiter, related);
+    this.name = name;
+    this.description = description;
+  }
+}
+class SettingsStateAsync<
+  R,
+  W = R,
+  L extends StateRelated = any
+> extends StateAsync<R, W, L> {
   readonly name: string;
   readonly description: string;
   constructor(
@@ -58,9 +90,9 @@ class SettingsState<R, W = R, L extends {} = any> extends State<R, W, L> {
       | (() => Promise<StateResult<R>>),
     name: string,
     description: string,
-    setter?: StateSetter<R, W> | true,
+    setter?: ((value: W) => Option<StateResult<R>>) | true,
     limiter?: StateLimiter<W>,
-    related?: StateRelater<L>
+    related?: () => Option<L>
   ) {
     super(init, setter, limiter, related);
     this.name = name;
@@ -118,18 +150,79 @@ export class SettingsGroup {
    */
   addSetting<R, W = R, L extends {} = any>(
     id: string,
-    init: R | Promise<R> | (() => Promise<R>),
     name: string,
     description: string,
-    setter?: StateSetter<R, W> | true,
+    init: R | (() => R),
+    setter?: ((value: W) => Option<StateResult<R>>) | true,
     limiter?: StateLimiter<W>,
-    related?: StateRelater<L>,
+    related?: () => Option<L>,
     versionChanged?: (existing: R, oldVersion: string) => R
-  ) {
+  ): State<R, W, L> {
     if (id in this.settings)
       throw new Error("Settings already registered " + id);
     let saved = localStorage[this.pathID + "/" + id];
     let state = (this.settings[id] = new SettingsState<R, W, L>(
+      () => {
+        if (saved) {
+          try {
+            if (this.versionChanged && versionChanged) {
+              let changedValue = versionChanged(
+                JSON.parse(saved),
+                this.versionChanged
+              );
+              localStorage[this.pathID + "/" + id] =
+                JSON.stringify(changedValue);
+              return Ok<R>(changedValue);
+            }
+            return Ok<R>(JSON.parse(saved));
+          } catch (e) {}
+        }
+        let initValue: R;
+        if (typeof init === "function") {
+          // @ts-ignore
+          initValue = init();
+        } else {
+          initValue = init;
+        }
+        localStorage[this.pathID + "/" + id] = JSON.stringify(initValue);
+        return Ok(initValue);
+      },
+      name,
+      description,
+      setter,
+      limiter,
+      related
+    ));
+    state.subscribe((value) => {
+      localStorage[this.pathID + "/" + id] = JSON.stringify(value.unwrap);
+    });
+    return state as State<R, W, L>;
+  }
+
+  /**Adds a state to the settings
+   * @param id unique identifier for this setting in the parent group
+   * @param name name of setting formatted for user reading
+   * @param description a description of what the setting is about formatted for user reading
+   * @param init initial value for the setting, use a promise for an eager async value, use a function returning a promise for a lazy async value
+   * @param setter a function that will be called when the setting is written to, if true written value will be directly saved
+   * @param limiter limiter struct for value
+   * @param related returns related struct for the setting
+   * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
+   */
+  addSettingAsync<R, W = R, L extends {} = any>(
+    id: string,
+    name: string,
+    description: string,
+    init: R | Promise<R> | (() => Promise<R>),
+    setter?: ((value: W) => Option<StateResult<R>>) | true,
+    limiter?: StateLimiter<W>,
+    related?: () => Option<L>,
+    versionChanged?: (existing: R, oldVersion: string) => R
+  ): StateAsync<R, W, L> {
+    if (id in this.settings)
+      throw new Error("Settings already registered " + id);
+    let saved = localStorage[this.pathID + "/" + id];
+    let state = (this.settings[id] = new SettingsStateAsync<R, W, L>(
       async () => {
         if (saved) {
           try {
@@ -166,6 +259,6 @@ export class SettingsGroup {
     state.subscribe((value) => {
       localStorage[this.pathID + "/" + id] = JSON.stringify(value.unwrap);
     });
-    return state;
+    return state as StateAsync<R, W, L>;
   }
 }

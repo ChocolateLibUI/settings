@@ -1,10 +1,14 @@
 import "./index.css";
-import { initSettings } from "../src";
+import { settingsInit, settingsSetNameTransform } from "../src";
 import { name, version } from "../package.json";
-import { State } from "@chocolatelib/state";
+import { State, StateAsync } from "@chocolatelib/state";
 import { Ok } from "@chocolatelib/result";
 
-let settings = initSettings(
+settingsSetNameTransform((name) => {
+  return name + "2";
+});
+
+let settings = settingsInit(
   name,
   version,
   "Test Settings",
@@ -12,11 +16,17 @@ let settings = initSettings(
 );
 
 (async () => {
-  let state = new State<number>(new Promise((a) => setTimeout(a, 500, 1)));
+  let state = new StateAsync<number>(new Promise((a) => setTimeout(a, 500, 1)));
   state.write(2);
   console.log(await state);
 
-  let TestBoolSetting = settings.addSetting("TestBool", false, true);
+  let TestBoolSetting = settings.addSetting(
+    "TestBool",
+    "Test Bool",
+    "Bool Test",
+    false,
+    true
+  );
   let valueBool = document.createElement("input");
   valueBool.type = "checkbox";
   document.body.appendChild(valueBool);
@@ -27,6 +37,8 @@ let settings = initSettings(
 
   let TestNumberSetting = settings.addSetting(
     "TestNumber",
+    " Test Number",
+    "Number Test",
     99,
     true,
     undefined,
@@ -51,8 +63,10 @@ let settings = initSettings(
     valueNumber.value = String((await TestNumberSetting).unwrap);
   });
 
-  let TestStringSetting = settings.addSetting(
+  let TestStringSetting = settings.addSettingAsync(
     "TestString",
+    "",
+    "",
     new Promise<string>((a) => {
       setTimeout(() => {
         a("yo");
