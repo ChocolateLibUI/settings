@@ -56,12 +56,12 @@ export let settingsInit = (
   ));
 };
 
-class SettingsState<
+class SettingsState<R, W = R, L extends StateRelated = {}, A = W> extends State<
   R,
-  W = R,
-  L extends StateRelated = any,
-  A = W
-> extends State<R, W, L, A> {
+  W,
+  L,
+  A
+> {
   readonly name: string;
   readonly description: string;
   constructor(
@@ -81,7 +81,7 @@ class SettingsState<
 class SettingsStateAsync<
   R,
   W = R,
-  L extends StateRelated = any,
+  L extends StateRelated = {},
   A = W
 > extends StateAsync<R, W, L, A> {
   readonly name: string;
@@ -149,7 +149,7 @@ export class SettingsGroup {
    * @param helper helper struct for setting, for limiting, checking and getting related values
    * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
-  addSetting<R, W = R, L extends {} = any, A = W>(
+  addSetting<R, W = R, L extends {} = {}, A = W>(
     id: string,
     name: string,
     description: string,
@@ -207,7 +207,7 @@ export class SettingsGroup {
    * @param helper helper struct for setting, for limiting, checking and getting related values
    * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
-  addSettingAsync<R, W = R, L extends {} = any, A = W>(
+  addSettingAsync<R, W = R, L extends {} = {}, A = W>(
     id: string,
     name: string,
     description: string,

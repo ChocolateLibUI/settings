@@ -40,6 +40,8 @@ let setting = settings.addSetting("settingID", "initial value","Name of setting"
 
 # Changelog
 
+- ## 0.2.2
+  Updated state library, fixed some types
 - ## 0.2.1
   Updated state library, fixed enum helpers
 - ## 0.2.0
