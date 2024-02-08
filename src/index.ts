@@ -56,11 +56,12 @@ export let settingsInit = (
   ));
 };
 
-class SettingsState<R, W = R, L extends StateRelated = any> extends State<
+class SettingsState<
   R,
-  W,
-  L
-> {
+  W = R,
+  L extends StateRelated = any,
+  A = W
+> extends State<R, W, L, A> {
   readonly name: string;
   readonly description: string;
   constructor(
@@ -70,7 +71,7 @@ class SettingsState<R, W = R, L extends StateRelated = any> extends State<
     name: string,
     description: string,
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    helper?: StateHelper<W, L>
+    helper?: StateHelper<A, L>
   ) {
     super(init, setter, helper);
     this.name = name;
@@ -80,8 +81,9 @@ class SettingsState<R, W = R, L extends StateRelated = any> extends State<
 class SettingsStateAsync<
   R,
   W = R,
-  L extends StateRelated = any
-> extends StateAsync<R, W, L> {
+  L extends StateRelated = any,
+  A = W
+> extends StateAsync<R, W, L, A> {
   readonly name: string;
   readonly description: string;
   constructor(
@@ -92,7 +94,7 @@ class SettingsStateAsync<
     name: string,
     description: string,
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    helper?: StateHelper<W, L>
+    helper?: StateHelper<A, L>
   ) {
     super(init, setter, helper);
     this.name = name;
@@ -147,19 +149,19 @@ export class SettingsGroup {
    * @param helper helper struct for setting, for limiting, checking and getting related values
    * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
-  addSetting<R, W = R, L extends {} = any>(
+  addSetting<R, W = R, L extends {} = any, A = W>(
     id: string,
     name: string,
     description: string,
     init: R | (() => R),
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    helper?: StateHelper<W, L>,
+    helper?: StateHelper<A, L>,
     versionChanged?: (existing: R, oldVersion: string) => R
   ): State<R, W, L> {
     if (id in this.settings)
       throw new Error("Settings already registered " + id);
     let saved = localStorage[this.pathID + "/" + id];
-    let state = (this.settings[id] = new SettingsState<R, W, L>(
+    let state = (this.settings[id] = new SettingsState<R, W, L, A>(
       () => {
         if (saved) {
           try {
@@ -177,7 +179,7 @@ export class SettingsGroup {
         }
         let initValue: R;
         if (typeof init === "function") {
-          // @ts-ignore
+          // @ts-expect-error
           initValue = init();
         } else {
           initValue = init;
@@ -193,7 +195,7 @@ export class SettingsGroup {
     state.subscribe((value) => {
       localStorage[this.pathID + "/" + id] = JSON.stringify(value.unwrap);
     });
-    return state as State<R, W, L>;
+    return state as State<R, W, L, A>;
   }
 
   /**Adds a state to the settings
@@ -205,19 +207,19 @@ export class SettingsGroup {
    * @param helper helper struct for setting, for limiting, checking and getting related values
    * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
-  addSettingAsync<R, W = R, L extends {} = any>(
+  addSettingAsync<R, W = R, L extends {} = any, A = W>(
     id: string,
     name: string,
     description: string,
     init: R | Promise<R> | (() => Promise<R>),
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    helper?: StateHelper<W, L>,
+    helper?: StateHelper<A, L>,
     versionChanged?: (existing: R, oldVersion: string) => R
   ): StateAsync<R, W, L> {
     if (id in this.settings)
       throw new Error("Settings already registered " + id);
     let saved = localStorage[this.pathID + "/" + id];
-    let state = (this.settings[id] = new SettingsStateAsync<R, W, L>(
+    let state = (this.settings[id] = new SettingsStateAsync<R, W, L, A>(
       async () => {
         if (saved) {
           try {
@@ -237,7 +239,7 @@ export class SettingsGroup {
         if (init instanceof Promise) {
           initValue = await init;
         } else if (typeof init === "function") {
-          // @ts-ignore
+          // @ts-expect-error
           initValue = await init();
         } else {
           initValue = init;
@@ -253,6 +255,6 @@ export class SettingsGroup {
     state.subscribe((value) => {
       localStorage[this.pathID + "/" + id] = JSON.stringify(value.unwrap);
     });
-    return state as StateAsync<R, W, L>;
+    return state as StateAsync<R, W, L, A>;
   }
 }
