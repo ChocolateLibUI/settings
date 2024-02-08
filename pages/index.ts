@@ -39,9 +39,10 @@ let settings = settingsInit(
     "TestNumber",
     " Test Number",
     "Number Test",
-    99,
+    () => {
+      return 99;
+    },
     true,
-    undefined,
     undefined,
     (oldValue, oldVersion) => {
       switch (oldVersion) {

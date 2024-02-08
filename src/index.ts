@@ -2,7 +2,7 @@ import { Ok, Option } from "@chocolatelib/result";
 import {
   State,
   StateAsync,
-  StateLimiter,
+  StateHelper,
   StateRelated,
   StateResult,
   StateWrite,
@@ -64,14 +64,15 @@ class SettingsState<R, W = R, L extends StateRelated = any> extends State<
   readonly name: string;
   readonly description: string;
   constructor(
-    init: StateResult<R> | (() => StateResult<R>),
+    init:
+      | StateResult<Exclude<R, Function>>
+      | (() => StateResult<Exclude<R, Function>>),
     name: string,
     description: string,
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    limiter?: StateLimiter<W>,
-    related?: () => Option<L>
+    helper?: StateHelper<W, L>
   ) {
-    super(init, setter, limiter, related);
+    super(init, setter, helper);
     this.name = name;
     this.description = description;
   }
@@ -85,16 +86,15 @@ class SettingsStateAsync<
   readonly description: string;
   constructor(
     init:
-      | StateResult<R>
-      | Promise<StateResult<R>>
-      | (() => Promise<StateResult<R>>),
+      | StateResult<Exclude<R, Function>>
+      | Promise<StateResult<Exclude<R, Function>>>
+      | (() => Promise<StateResult<Exclude<R, Function>>>),
     name: string,
     description: string,
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    limiter?: StateLimiter<W>,
-    related?: () => Option<L>
+    helper?: StateHelper<W, L>
   ) {
-    super(init, setter, limiter, related);
+    super(init, setter, helper);
     this.name = name;
     this.description = description;
   }
@@ -144,8 +144,7 @@ export class SettingsGroup {
    * @param description a description of what the setting is about formatted for user reading
    * @param init initial value for the setting, use a promise for an eager async value, use a function returning a promise for a lazy async value
    * @param setter a function that will be called when the setting is written to, if true written value will be directly saved
-   * @param limiter limiter struct for value
-   * @param related returns related struct for the setting
+   * @param helper helper struct for setting, for limiting, checking and getting related values
    * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
   addSetting<R, W = R, L extends {} = any>(
@@ -154,8 +153,7 @@ export class SettingsGroup {
     description: string,
     init: R | (() => R),
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    limiter?: StateLimiter<W>,
-    related?: () => Option<L>,
+    helper?: StateHelper<W, L>,
     versionChanged?: (existing: R, oldVersion: string) => R
   ): State<R, W, L> {
     if (id in this.settings)
@@ -172,7 +170,7 @@ export class SettingsGroup {
               );
               localStorage[this.pathID + "/" + id] =
                 JSON.stringify(changedValue);
-              return Ok<R>(changedValue);
+              return Ok<R>(changedValue) as any;
             }
             return Ok<R>(JSON.parse(saved));
           } catch (e) {}
@@ -190,8 +188,7 @@ export class SettingsGroup {
       name,
       description,
       setter,
-      limiter,
-      related
+      helper
     ));
     state.subscribe((value) => {
       localStorage[this.pathID + "/" + id] = JSON.stringify(value.unwrap);
@@ -205,8 +202,7 @@ export class SettingsGroup {
    * @param description a description of what the setting is about formatted for user reading
    * @param init initial value for the setting, use a promise for an eager async value, use a function returning a promise for a lazy async value
    * @param setter a function that will be called when the setting is written to, if true written value will be directly saved
-   * @param limiter limiter struct for value
-   * @param related returns related struct for the setting
+   * @param helper helper struct for setting, for limiting, checking and getting related values
    * @param versionChanged function to call when the version of the setting changed, existing value is passed as argument, return modified value
    */
   addSettingAsync<R, W = R, L extends {} = any>(
@@ -215,8 +211,7 @@ export class SettingsGroup {
     description: string,
     init: R | Promise<R> | (() => Promise<R>),
     setter?: ((value: W) => Option<StateResult<R>>) | true,
-    limiter?: StateLimiter<W>,
-    related?: () => Option<L>,
+    helper?: StateHelper<W, L>,
     versionChanged?: (existing: R, oldVersion: string) => R
   ): StateAsync<R, W, L> {
     if (id in this.settings)
@@ -233,7 +228,7 @@ export class SettingsGroup {
               );
               localStorage[this.pathID + "/" + id] =
                 JSON.stringify(changedValue);
-              return Ok<R>(changedValue);
+              return Ok<R>(changedValue) as any;
             }
             return Ok<R>(JSON.parse(saved));
           } catch (e) {}
@@ -253,8 +248,7 @@ export class SettingsGroup {
       name,
       description,
       setter,
-      limiter,
-      related
+      helper
     ));
     state.subscribe((value) => {
       localStorage[this.pathID + "/" + id] = JSON.stringify(value.unwrap);
